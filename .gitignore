@@ -19,3 +19,5 @@ celerybeat-schedule.db
 celery_env
 env
 .env
+__pycache__/
+.pytest_cache/

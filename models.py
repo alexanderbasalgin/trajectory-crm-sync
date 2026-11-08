@@ -1,7 +1,7 @@
 from enum import Enum
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, func, MetaData
+from sqlalchemy import Column, Index, func, MetaData
 from sqlalchemy.dialects.postgresql import JSONB
 
 naming_convention = {
@@ -92,3 +92,12 @@ class AbstractCustomer(db.Model):
     send_methods = Column(JSONB)
     created_at = Column(db.DateTime, server_default=func.now())
     updated_at = Column(db.DateTime, onupdate=func.now())
+
+    # GIN (jsonb_path_ops) обслуживает все containment-поиски `@>`: по id и логину в ночном прогоне,
+    # по точному логину и названию в остальных частях системы. Без них каждый поиск - полный скан таблицы.
+    __table_args__ = (
+        Index('ix_abstract_customer_amo_customers_gin', amo_customers,
+              postgresql_using='gin', postgresql_ops={'amo_customers': 'jsonb_path_ops'}),
+        Index('ix_abstract_customer_amo_leads_gin', amo_leads,
+              postgresql_using='gin', postgresql_ops={'amo_leads': 'jsonb_path_ops'}),
+    )
